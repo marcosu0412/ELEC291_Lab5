@@ -296,7 +296,7 @@ void main (void)
 		}
 		TR0=0; //Stop timer
 		timediff=(overflow_count*65536.0TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
-		phase=timediff*(360.0/period); //in degrees
+		phase=180.0 - (timediff*(360.0/period))%180.0; //in degrees
 		// Send the period to the serial port
 		printf( "Phase=%f deg  \r", phase);
 	}  
