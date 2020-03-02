@@ -178,9 +178,10 @@ void main (void)
 {
 	float v[2];
 	float period;
+	float period2;
 	TIMER0_Init();
 
-    waitms(500); // Give PuTTy a chance to start before sending
+    	waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
 	
 	//printf ("ADC test program\n"
@@ -190,7 +191,7 @@ void main (void)
 	
 	InitPinADC(1, 6); // Configure P0.1 as analog input
 	InitPinADC(1, 7); // Configure P0.2 as analog input
-    InitADC();
+    	InitADC();
 
 	while(1)
 	{   
@@ -227,7 +228,37 @@ void main (void)
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
-		printf( "T=%f ms    \r", period*1000.0);
+		printf( "T=%f ms    ", period*1000.0);
+		
+		//Now reading second port period
+		TL0=0; 
+		TH0=0;
+		TF0=0;
+		overflow_count=0;
+		
+		while(P0_2!=0); // Wait for the signal to be zero
+		while(P0_2!=1); // Wait for the signal to be one
+		TR0=1; // Start the timer
+		while(P0_2!=0) // Wait for the signal to be zero
+		{
+			if(TF0==1) // Did the 16-bit timer overflow?
+			{
+				TF0=0;
+				overflow_count++;
+			}
+		}
+		while(P0_2!=1) // Wait for the signal to be one
+		{
+			if(TF0==1) // Did the 16-bit timer overflow?
+			{
+				TF0=0;
+				overflow_count++;
+			}
+		}
+		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
+		period2=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
+		// Send the period to the serial port
+		printf( "T=%f ms    \r", period2*1000.0);
 	}  
 }	
 
