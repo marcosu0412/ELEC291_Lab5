@@ -271,15 +271,47 @@ void main (void)
 		while(P0_1!=0); // Wait for the signal to be zero
 		while(P0_1!=1); // Wait for the signal to be one
 		TR0=1; // Start the timer
-		
-		while(P0_2!=0); // Wait for the signal to be zero
-		while(P0_2!=1); // Wait for the signal to be one
+		while(P0_2!=0){
+			while(P0_1!=0) // Wait for the signal to be zero
+			{
+				if(TF0==1) // Did the 16-bit timer overflow?
+				{
+					TF0=0;
+					overflow_count++;
+				}
+			}
+			while(P0_1!=1) // Wait for the signal to be one
+			{
+				if(TF0==1) // Did the 16-bit timer overflow?
+				{
+					TF0=0;
+					overflow_count++;
+				}
+			}
+		}
+		while(P0_2!=1){
+			while(P0_1!=0) // Wait for the signal to be zero
+			{
+				if(TF0==1) // Did the 16-bit timer overflow?
+				{
+					TF0=0;
+					overflow_count++;
+				}
+			}
+			while(P0_1!=1) // Wait for the signal to be one
+			{
+				if(TF0==1) // Did the 16-bit timer overflow?
+				{
+					TF0=0;
+					overflow_count++;
+				}
+			}
+		}
 		TR0=0; //Stop timer
-		
 		timediff=(TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
 		phase=timediff*(360.0/period); //in degrees
 		// Send the period to the serial port
-		printf( "Phase=%f deg.  \r", phase);
+		printf( "Phase=%f deg  \r", phase);
 	}  
 }	
 
