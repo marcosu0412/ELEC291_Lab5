@@ -281,7 +281,7 @@ void main (void)
 					overflow_count++;
 				}
 				if(P0_2!=0)
-					TR=0;
+					TR0=0;
 			}
 			while(P0_1!=1) // Wait for the signal to be one
 			{
@@ -291,11 +291,11 @@ void main (void)
 					overflow_count++;
 				}
 				if(P0_2!=0)
-					TR=0;
+					TR0=0;
 			}
 		}
 		TR0=0; //Stop timer
-		timediff=(TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
+		timediff=(overflow_count*65536.0TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
 		phase=timediff*(360.0/period); //in degrees
 		// Send the period to the serial port
 		printf( "Phase=%f deg  \r", phase);
