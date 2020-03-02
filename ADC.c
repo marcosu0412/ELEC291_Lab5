@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <EFM8LB1.h>
-
+//0.1 and 1.6 are reference period and peak
+//0.2 and 1.7 are test period and peak
 // ~C51~  
 
 #define SYSCLK 72000000L
@@ -191,13 +192,13 @@ void main (void)
 	//        "Compiled: %s, %s\n\n",
 	//        __FILE__, __DATE__, __TIME__);
 	
-	InitPinADC(1, 6); // Configure P0.1 as analog input
-	InitPinADC(1, 7); // Configure P0.2 as analog input
+	InitPinADC(1, 6); // Configure P0.1 as analog input (reference)
+	InitPinADC(1, 7); // Configure P0.2 as analog input (test)
     	InitADC();
 
 	while(1)
 	{   
-		waitms(400);
+		waitms(50);
         	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
 		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
 		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV  ", v[0], v[1]);
@@ -295,8 +296,11 @@ void main (void)
 			}
 		}
 		TR0=0; //Stop timer
-		timediff=(overflow_count*65536.0TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
-		phase=180.0 - (timediff*(360.0/period))%180.0; //in degrees
+		timediff=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
+		phase=timediff*(360.0/period); //in degrees
+		if(phase>180.0){
+			phase=phase-360.0;
+		}
 		// Send the period to the serial port
 		printf( "Phase=%f deg  \r", phase);
 	}  
