@@ -281,7 +281,7 @@ void main (void)
 		timediff=(TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
 		phase=timediff*(360.0/period); //in degrees
 		// Send the period to the serial port
-		printf( "T=%f ms    \r", period2*1000.0);
+		printf( "Phase=%f deg.  \r", phase);
 	}  
 }	
 
