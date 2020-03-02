@@ -198,8 +198,6 @@ void main (void)
 	while(1)
 	{   
 		waitms(400);
-        	float posedge;
-		float posedge2;
         	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
 		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
 		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV  ", v[0], v[1]);
@@ -261,7 +259,7 @@ void main (void)
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period2=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
-		printf( "T=%f ms    \r", period2*1000.0);
+		printf( "T=%f ms   ", period2*1000.0);
 		
 		
 		//TIME TO READ THA PHASE DIFFERENCE
