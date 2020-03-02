@@ -8,13 +8,11 @@
 #include <stdlib.h>
 #include <EFM8LB1.h>
 
-#include "lcd.h"
-//#include "global.h"
-
 // ~C51~  
 
 #define SYSCLK 72000000L
 #define BAUDRATE 115200L
+unsigned char overflow_count;
 
 char _c51_external_startup (void)
 {
@@ -124,7 +122,7 @@ void waitms (unsigned int ms)
 		for (k=0; k<4; k++) Timer3us(250);
 }
 
-#define VDD 3.8 // The measured value of VDD in volts
+#define VDD 3.3035 // The measured value of VDD in volts
 
 void InitPinADC (unsigned char portno, unsigned char pin_num)
 {
@@ -168,79 +166,6 @@ float Volts_at_Pin(unsigned char pin)
 	 return ((ADC_at_Pin(pin)*VDD)/16383.0);
 }
 
-void LCD_pulse (void)
-{
-	LCD_E=1;
-	Timer3us(40);
-	LCD_E=0;
-}
-
-void LCD_byte (unsigned char x)
-{
-	// The accumulator in the C8051Fxxx is bit addressable!
-	ACC=x; //Send high nible
-	LCD_D7=ACC_7;
-	LCD_D6=ACC_6;
-	LCD_D5=ACC_5;
-	LCD_D4=ACC_4;
-	LCD_pulse();
-	Timer3us(40);
-	ACC=x; //Send low nible
-	LCD_D7=ACC_3;
-	LCD_D6=ACC_2;
-	LCD_D5=ACC_1;
-	LCD_D4=ACC_0;
-	LCD_pulse();
-}
-
-void WriteData (unsigned char x)
-{
-	LCD_RS=1;
-	LCD_byte(x);
-	waitms(2);
-}
-
-void WriteCommand (unsigned char x)
-{
-	LCD_RS=0;
-	LCD_byte(x);
-	waitms(5);
-}
-
-void LCD_4BIT (void)
-{
-	LCD_E=0; // Resting state of LCD's enable is zero
-	//LCD_RW=0; // We are only writing to the LCD in this program
-	waitms(20);
-	// First make sure the LCD is in 8-bit mode and then change to 4-bit mode
-	WriteCommand(0x33);
-	WriteCommand(0x33);
-	WriteCommand(0x32); // Change to 4-bit mode
-
-	// Configure the LCD
-	WriteCommand(0x28);
-	WriteCommand(0x0c);
-	WriteCommand(0x01); // Clear screen command (takes some time)
-	waitms(20); // Wait for clear screen command to finsih.
-}
-
-void LCDprint(char * string, unsigned char line, bit clear)
-{
-	int j;
-
-	WriteCommand(line==2?0xc0:0x80);
-	waitms(5);
-	for(j=0; string[j]!=0; j++)	WriteData(string[j]);// Write the message
-	if(clear) for(; j<CHARS_PER_LINE; j++) WriteData(' '); // Clear the rest of the line
-}
-
-unsigned int Get_ADC (void)
-{
-	ADBUSY = 1;
-	while (ADBUSY); // Wait for conversion to complete
-	return (ADC0);
-}
-
 void TIMER0_Init(void)
 {
 	TMOD&=0b_1111_0000; // Set the bits of Timer/Counter 0 to zero
@@ -251,31 +176,64 @@ void TIMER0_Init(void)
 
 void main (void)
 {
-	float v[4];
+	float v[2];
+	float period;
+	TIMER0_Init();
 
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
 	
-	printf ("ADC test program\n"
-	        "File: %s\n"
-	        "Compiled: %s, %s\n\n",
-	        __FILE__, __DATE__, __TIME__);
+	//printf ("ADC test program\n"
+	//        "File: %s\n"
+	//        "Compiled: %s, %s\n\n",
+	//        __FILE__, __DATE__, __TIME__);
 	
-	InitPinADC(1, 6); // Configure P1.6 as analog input black wire(REF) Peak Detector
-	InitPinADC(1, 7); // Configure P1.7 as analog input white wire(TEST) Peak Detector
-	InitPinADC(0, 1); // Configure P0.1 as analog input 
-	InitPinADC(0, 2); // Configure P0.2 as analog input
+	InitPinADC(1, 6); // Configure P0.1 as analog input
+	InitPinADC(1, 7); // Configure P0.2 as analog input
     InitADC();
 
 	while(1)
-	{
-	    // Read 14-bit value from the pins configured as analog inputs
-		v[0] = Volts_at_Pin(QFP32_MUX_P1_7); // voltage read from input
-		v[1] = Volts_at_Pin(QFP32_MUX_P1_6); // 
-		v[2] = Volts_at_Pin(QFP32_MUX_P0_1);
-		v[3] = Volts_at_Pin(QFP32_MUX_P1_2);
-		printf ("V@P1.7=%7.5fV, V@P1.6=%7.5fV, V@P0.1=%7.5fV, V@P1.2=%7.5fV\r", v[0], v[1], v[2], v[3]);
+	{   
 		waitms(500);
-	 }  
+        
+        v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
+		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
+		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV\r", v[0], v[1]);
+		//waitms(500);
+
+		// Reset the counter
+		/*TL0=0; 
+		TH0=0;
+		TF0=0;
+		overflow_count=0;
+		
+		while(P0_1!=0); // Wait for the signal to be zero
+		while(P0_1!=1); // Wait for the signal to be one
+		TR0=1; // Start the timer
+		while(P0_1!=0) // Wait for the signal to be zero
+		{
+			if(TF0==1) // Did the 16-bit timer overflow?
+			{
+				TF0=0;
+				overflow_count++;
+			}
+		}
+		while(P0_1!=1) // Wait for the signal to be one
+		{
+			if(TF0==1) // Did the 16-bit timer overflow?
+			{
+				TF0=0;
+				overflow_count++;
+			}
+		}
+		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
+		period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
+		// Send the period to the serial port
+		//printf( "  ");
+        
+
+	   // Read 14-bit value from the pins configured as analog inputs
+		*/
+	}  
 }	
 
