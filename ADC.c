@@ -229,7 +229,7 @@ void main (void)
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
-		printf( "T=%f ms    ", period*1000.0);
+		printf( "T=%f ms   ", period*1000.0);
 		
 		//Now reading second port period
 		TL0=0; 
@@ -259,7 +259,7 @@ void main (void)
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period2=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
-		printf( "T=%f ms   ", period2*1000.0);
+		printf( "T2=%f ms  ", period2*1000.0);
 		
 		
 		//TIME TO READ THA PHASE DIFFERENCE
@@ -271,24 +271,7 @@ void main (void)
 		while(P0_1!=0); // Wait for the signal to be zero
 		while(P0_1!=1); // Wait for the signal to be one
 		TR0=1; // Start the timer
-		while(P0_2!=0){
-			while(P0_1!=0) // Wait for the signal to be zero
-			{
-				if(TF0==1) // Did the 16-bit timer overflow?
-				{
-					TF0=0;
-					overflow_count++;
-				}
-			}
-			while(P0_1!=1) // Wait for the signal to be one
-			{
-				if(TF0==1) // Did the 16-bit timer overflow?
-				{
-					TF0=0;
-					overflow_count++;
-				}
-			}
-		}
+		while(P0_2!=0);
 		while(P0_2!=1){
 			while(P0_1!=0) // Wait for the signal to be zero
 			{
@@ -297,6 +280,8 @@ void main (void)
 					TF0=0;
 					overflow_count++;
 				}
+				if(P0_2!=0)
+					TR=0;
 			}
 			while(P0_1!=1) // Wait for the signal to be one
 			{
@@ -305,6 +290,8 @@ void main (void)
 					TF0=0;
 					overflow_count++;
 				}
+				if(P0_2!=0)
+					TR=0;
 			}
 		}
 		TR0=0; //Stop timer
