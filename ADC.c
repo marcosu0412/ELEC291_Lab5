@@ -179,6 +179,8 @@ void main (void)
 	float v[2];
 	float period;
 	float period2;
+	float timediff; //time difference between signals
+	float phase; //in degrees
 	TIMER0_Init();
 
     	waitms(500); // Give PuTTy a chance to start before sending
@@ -196,7 +198,8 @@ void main (void)
 	while(1)
 	{   
 		waitms(400);
-        
+        	float posedge;
+		float posedge2;
         	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
 		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
 		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV  ", v[0], v[1]);
@@ -257,6 +260,25 @@ void main (void)
 		}
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period2=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
+		// Send the period to the serial port
+		printf( "T=%f ms    \r", period2*1000.0);
+		
+		
+		//TIME TO READ THA PHASE DIFFERENCE
+		TL0=0; 
+		TH0=0;
+		TF0=0;
+		overflow_count=0;
+		
+		while(P0_1!=0); // Wait for the signal to be zero
+		while(P0_1!=1); // Wait for the signal to be one
+		TR0=1; // Start the timer
+		while(P0_2!=0); // Wait for the signal to be zero
+		while(P0_2!=1); // Wait for the signal to be one
+		TR0=0; //Stop timer
+		
+		timediff=(65536.0+TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
+		
 		// Send the period to the serial port
 		printf( "T=%f ms    \r", period2*1000.0);
 	}  
