@@ -194,15 +194,13 @@ void main (void)
 
 	while(1)
 	{   
-		waitms(500);
+		waitms(400);
         
-        v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
+        	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
 		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
-		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV\r", v[0], v[1]);
-		//waitms(500);
-
+		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV\n", v[0], v[1]);
 		// Reset the counter
-		/*TL0=0; 
+		TL0=0; 
 		TH0=0;
 		TF0=0;
 		overflow_count=0;
@@ -229,11 +227,7 @@ void main (void)
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 		period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
-		//printf( "  ");
-        
-
-	   // Read 14-bit value from the pins configured as analog inputs
-		*/
+		printf( "T=%f ms    \r", period*1000.0);
 	}  
 }	
 
