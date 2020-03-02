@@ -199,7 +199,7 @@ void main (void)
         
         	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
 		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
-		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV\n", v[0], v[1]);
+		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV  ", v[0], v[1]);
 		// Reset the counter
 		TL0=0; 
 		TH0=0;
