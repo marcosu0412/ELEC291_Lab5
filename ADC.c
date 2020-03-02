@@ -273,12 +273,13 @@ void main (void)
 		while(P0_1!=0); // Wait for the signal to be zero
 		while(P0_1!=1); // Wait for the signal to be one
 		TR0=1; // Start the timer
+		
 		while(P0_2!=0); // Wait for the signal to be zero
 		while(P0_2!=1); // Wait for the signal to be one
 		TR0=0; //Stop timer
 		
-		timediff=(65536.0+TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
-		
+		timediff=(TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
+		phase=timediff*(360.0/period); //in degrees
 		// Send the period to the serial port
 		printf( "T=%f ms    \r", period2*1000.0);
 	}  
