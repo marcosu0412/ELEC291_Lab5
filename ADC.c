@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <EFM8LB1.h>
-//0.1 and 1.6 are reference period and peak
-//0.2 and 1.7 are test period and peak
+#include "lcd.h"
+
 // ~C51~  
 
 #define SYSCLK 72000000L
@@ -174,6 +174,71 @@ void TIMER0_Init(void)
 	TR0=0; // Stop Timer/Counter 0
 }
 
+void LCD_pulse (void)
+{
+	LCD_E=1;
+	Timer3us(40);
+	LCD_E=0;
+}
+
+void LCD_byte (unsigned char x)
+{
+	// The accumulator in the C8051Fxxx is bit addressable!
+	ACC=x; //Send high nible
+	LCD_D7=ACC_7;
+	LCD_D6=ACC_6;
+	LCD_D5=ACC_5;
+	LCD_D4=ACC_4;
+	LCD_pulse();
+	Timer3us(40);
+	ACC=x; //Send low nible
+	LCD_D7=ACC_3;
+	LCD_D6=ACC_2;
+	LCD_D5=ACC_1;
+	LCD_D4=ACC_0;
+	LCD_pulse();
+}
+
+void WriteData (unsigned char x)
+{
+	LCD_RS=1;
+	LCD_byte(x);
+	waitms(2);
+}
+
+void WriteCommand (unsigned char x)
+{
+	LCD_RS=0;
+	LCD_byte(x);
+	waitms(5);
+}
+
+void LCD_4BIT (void)
+{
+	LCD_E=0; // Resting state of LCD's enable is zero
+	//LCD_RW=0; // We are only writing to the LCD in this program
+	waitms(20);
+	// First make sure the LCD is in 8-bit mode and then change to 4-bit mode
+	WriteCommand(0x33);
+	WriteCommand(0x33);
+	WriteCommand(0x32); // Change to 4-bit mode
+
+	// Configure the LCD
+	WriteCommand(0x28);
+	WriteCommand(0x0c);
+	WriteCommand(0x01); // Clear screen command (takes some time)
+	waitms(20); // Wait for clear screen command to finsih.
+}
+
+void LCDprint(char * string, unsigned char line, bit clear)
+{
+	int j;
+
+	WriteCommand(line==2?0xc0:0x80);
+	waitms(5);
+	for(j=0; string[j]!=0; j++)	WriteData(string[j]);// Write the message
+	if(clear) for(; j<CHARS_PER_LINE; j++) WriteData(' '); // Clear the rest of the line
+}
 
 void main (void)
 {
@@ -192,8 +257,8 @@ void main (void)
 	//        "Compiled: %s, %s\n\n",
 	//        __FILE__, __DATE__, __TIME__);
 	
-	InitPinADC(1, 6); // Configure P0.1 as analog input (reference)
-	InitPinADC(1, 7); // Configure P0.2 as analog input (test)
+	InitPinADC(1, 6); // Configure P0.1 as analog input
+	InitPinADC(1, 7); // Configure P0.2 as analog input
     	InitADC();
 
 	while(1)
@@ -282,7 +347,10 @@ void main (void)
 					overflow_count++;
 				}
 				if(P0_2!=0)
+				{
 					TR0=0;
+					break;
+				}
 			}
 			while(P0_1!=1) // Wait for the signal to be one
 			{
@@ -292,17 +360,22 @@ void main (void)
 					overflow_count++;
 				}
 				if(P0_2!=0)
+				{	
 					TR0=0;
+                    break;
+				}
+
 			}
 		}
 		TR0=0; //Stop timer
 		timediff=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK); //time difference in ms
-		phase=timediff*(360.0/period); //in degrees
-		if(phase>180.0){
-			phase=phase-360.0;
-		}
+		phase=(timediff*(360.0/period))+0.775; //in degree 
+		if(phase>180.0)
+		{
+			phase = phase - 360.0;
+		
+		}	
 		// Send the period to the serial port
 		printf( "Phase=%f deg  \r", phase);
 	}  
 }	
-
