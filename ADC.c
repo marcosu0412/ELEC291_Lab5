@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <EFM8LB1.h>
+#include <math.h>
+
 #include "lcd.h"
 
 // ~C51~  
@@ -247,8 +249,11 @@ void main (void)
 	float period2;
 	float timediff; //time difference between signals
 	float phase; //in degrees
-	TIMER0_Init();
+	float freqdiff;
+	char buff[17];
 
+	TIMER0_Init();
+	LCD_4BIT();
     	waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
 	
@@ -257,16 +262,16 @@ void main (void)
 	//        "Compiled: %s, %s\n\n",
 	//        __FILE__, __DATE__, __TIME__);
 	
-	InitPinADC(1, 6); // Configure P0.1 as analog input
-	InitPinADC(1, 7); // Configure P0.2 as analog input
+	InitPinADC(1, 0); // Configure P1.0 as analog input
+	InitPinADC(1, 1); // Configure P1.7 as analog input
     	InitADC();
 
 	while(1)
 	{   
-		waitms(50);
-        	v[0] = Volts_at_Pin(QFP32_MUX_P1_6);
-		v[1] = Volts_at_Pin(QFP32_MUX_P1_7);
-		printf ("V@P1.6=%7.5fV, V@P1.7=%7.5fV  ", v[0], v[1]);
+		waitms(200);
+        	v[0] = Volts_at_Pin(QFP32_MUX_P1_0);
+		v[1] = Volts_at_Pin(QFP32_MUX_P1_1);
+		printf ("V@P1.0=%7.5fV, V@P1.1=%7.5fV  ", v[0], v[1]);
 		// Reset the counter
 		TL0=0; 
 		TH0=0;
@@ -292,7 +297,9 @@ void main (void)
 				overflow_count++;
 			}
 		}
+
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
+		waitms(5);		
 		period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
 		printf( "T=%f ms   ", period*1000.0);
@@ -323,6 +330,7 @@ void main (void)
 			}
 		}
 		TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
+		waitms(5);
 		period2=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 		// Send the period to the serial port
 		printf( "T2=%f ms  ", period2*1000.0);
@@ -377,5 +385,19 @@ void main (void)
 		}	
 		// Send the period to the serial port
 		printf( "Phase=%f deg  \r", phase);
+		
+		freqdiff = period*1000 - period2*1000;
+		if((freqdiff > 0.1) || (freqdiff < -0.1)){
+			LCDprint("ERROR: Freq", 1, 1);
+			LCDprint("doesn't match", 2, 1);
+		}
+		else {
+			sprintf(buff, "R:%.3fV   %0.1f",v[0]/1.4142, phase);
+			LCDprint(buff,1,1);
+			sprintf(buff, "T:%.3fV    deg",v[1]/1.4142);
+			LCDprint(buff,2,1);
+			
+		}
+		
 	}  
 }	
